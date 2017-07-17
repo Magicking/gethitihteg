@@ -46,6 +46,11 @@ func newClient(c *rpc.Client) *Client {
 	return &Client{c}
 }
 
+// Close close the RPC connection.
+func (ec *Client) Close() {
+	ec.Close()
+}
+
 // HeaderByHash returns the block header with the given hash.
 func (ec *Client) HeaderByHash(ctx context.Context, hash common.Hash) (*types.Header, error) {
 	var head *types.Header

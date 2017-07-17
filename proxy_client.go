@@ -43,6 +43,11 @@ func NewNodeConnector(rawurl string, try_max int) (*NodeConnector, error) {
 	return &NodeConnector{client: client, rawurl: rawurl, try_max: try_max}, nil
 }
 
+// Close close the RPC connection.
+func (ec *NodeConnector) Close() {
+	ec.Close()
+}
+
 // TODO Should return a fresh non-syncing ethereum client
 func (nc *NodeConnector) GetClient(ctx context.Context) (*ethclient.Client, error) {
 	i := 0
