@@ -27,32 +27,44 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-// Client defines typed wrappers for the Ethereum RPC API.
-type Client struct {
-	c *rpc.Client
+// ClientConnector defines typed wrappers for the Ethereum RPC API.
+type ClientConnector struct {
+	c       *rpc.Client
+	rawurl  string
+	try_max int
 }
 
 // Dial connects a client to the given URL.
-func Dial(rawurl string) (*Client, error) {
-	c, err := rpc.Dial(rawurl)
-	if err != nil {
-		return nil, err
+func (ec *ClientConnector) Dial() error {
+	c, err := rpc.Dial(ec.rawurl)
+	if err != nil { // TODO retry here ?
+		return err
 	}
-	return newClient(c), nil
+	ec.c = c
+	return nil
 }
 
-// NewClient creates a client that uses the given RPC client.
-func newClient(c *rpc.Client) *Client {
-	return &Client{c}
+// NewClientConnector creates a client that uses the given RPC client.
+func NewClientConnector(rawurl string, try_max int) (*ClientConnector, error) {
+	cc := ClientConnector{
+		c:       nil,
+		rawurl:  rawurl,
+		try_max: try_max,
+	}
+	err := cc.Dial()
+	if err != nil { // TODO retry here ?
+		return nil, err
+	}
+	return &cc, nil
 }
 
 // Close close the RPC connection.
-func (ec *Client) Close() {
+func (ec *ClientConnector) Close() {
 	ec.Close()
 }
 
 // HeaderByHash returns the block header with the given hash.
-func (ec *Client) HeaderByHash(ctx context.Context, hash common.Hash) (*types.Header, error) {
+func (ec *ClientConnector) HeaderByHash(ctx context.Context, hash common.Hash) (*types.Header, error) {
 	var head *types.Header
 	err := ec.c.CallContext(ctx, &head, "eth_getBlockByHash", hash, false)
 	if err == nil && head == nil {
@@ -62,7 +74,7 @@ func (ec *Client) HeaderByHash(ctx context.Context, hash common.Hash) (*types.He
 }
 
 // TransactionByHash returns the transaction with the given hash.
-func (ec *Client) TransactionByHashFull(ctx context.Context, hash common.Hash) (tx *types.Transaction, blockhash *common.Hash, err error) {
+func (ec *ClientConnector) TransactionByHashFull(ctx context.Context, hash common.Hash) (tx *types.Transaction, blockhash *common.Hash, err error) {
 	var raw json.RawMessage
 	err = ec.c.CallContext(ctx, &raw, "eth_getTransactionByHash", hash)
 	if err != nil {
