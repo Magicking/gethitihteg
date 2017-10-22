@@ -252,3 +252,60 @@ func (nc *NodeConnector) GetTransaction(ctx context.Context, hash common.Hash) (
 	}
 	return tx, isPending, nil
 }
+
+type EventManager interface {
+	FireEvent(ctx context.Context, evt *types.Log)
+}
+
+type ChanMsg int
+
+const (
+	DeathPill ChanMsg = iota
+	Subscribe
+)
+
+func (nc *NodeConnector) SubscribeToEvents(ctx context.Context, addr common.Address, evt_mgr EventManager) chan ChanMsg {
+	cMsg := make(chan ChanMsg)
+
+	go func() {
+		q := ethereum.FilterQuery{Addresses: []common.Address{addr}}
+		logChan := make(chan types.Log)
+		defer close(logChan)
+		for {
+			select {
+			case element := <-logChan:
+				evt_mgr.FireEvent(ctx, &element)
+			case msg := <-cMsg:
+				switch msg {
+				case Subscribe:
+					for {
+						_, err := nc.GetClient(ctx)
+						if err != nil {
+							log.Printf("Could not connect to Ethereum client: %v", err)
+							time.Sleep(1 * time.Second) //TODO find a better way to yield
+							continue
+						}
+						sub, err := nc.client.SubscribeFilterLogs(ctx, q, logChan)
+						if err != nil {
+							log.Printf("Could not subscribe to logs: %v", err)
+							time.Sleep(1 * time.Second) //TODO find a better way to yield
+							continue
+						}
+						go func() {
+							log.Printf("SubscribeToEvents: %v", <-sub.Err())
+							sub.Unsubscribe()
+							time.Sleep(1 * time.Second) //TODO find a better way to yield
+							cMsg <- Subscribe
+						}()
+						break
+					}
+				case DeathPill:
+					return
+				}
+			}
+		}
+	}()
+
+	cMsg <- Subscribe
+	return cMsg
+}
