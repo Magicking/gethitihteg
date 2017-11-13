@@ -23,8 +23,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-func NewBlockchainContext(raw_url, pkey_hex string) (*BlockchainContext, error) {
-	NC, err := NewNodeConnector(raw_url, 3)
+func NewBlockchainContext(raw_url, pkey_hex string, retry int) (*BlockchainContext, error) {
+	NC, err := NewNodeConnector(raw_url, retry)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to initialize connection to node: %v", err)
 	}
