@@ -95,6 +95,10 @@ func main() {
 		nameParts := strings.Split(name, ":")
 		fmt.Println(nameParts)
 		addr, tx, _, err := ethtk.CreateContractHelper(client, opts.PrivateKey, string(abi), contract.Code, params...)
+		if err != nil {
+			log.Println("main:", err)
+			continue
+		}
 		fmt.Printf("TX(%v): %v [err: %v]\n", tx.Hash().Hex(), addr.Hex(), err)
 
 		TODO = true
