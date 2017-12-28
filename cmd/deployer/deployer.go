@@ -19,6 +19,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/big"
 	"strings"
@@ -35,6 +36,7 @@ var opts struct {
 	SolF       []string `long:"sol" required:"true" description:"Path to the Ethereum contract Solidity source to deploy"`
 	SolC       string   `long:"solc" default:"solc" description:"Solidity compiler to use if source builds are requested"`
 	Excl       []string `long:"excl" description:"Contract to exclude from deploying"`
+	CacheNonce string   `long:"cache-nonce" description:"Path to cached nonce"`
 }
 
 func ParamsParse(params []string) (ret []interface{}, err error) {
@@ -65,6 +67,15 @@ func main() {
 	if err != nil {
 		return
 	}
+	var nonce *big.Int
+	if opts.CacheNonce != "" {
+		_nonce, err := ioutil.ReadFile(opts.CacheNonce)
+		if err != nil {
+			log.Println("ReadFile", err)
+		} else {
+			nonce = big.NewInt(0).SetBytes(_nonce)
+		}
+	}
 	client, err := ethtk.NewNodeConnector(opts.RpcURL, 3)
 	if err != nil {
 		log.Fatalf("Could not initialize client context: %v", err)
@@ -94,12 +105,21 @@ func main() {
 		abi, _ := json.Marshal(contract.Info.AbiDefinition) // Flatten the compiler parse
 		nameParts := strings.Split(name, ":")
 		fmt.Println(nameParts)
-		addr, tx, _, err := ethtk.CreateContractHelper(client, opts.PrivateKey, string(abi), contract.Code, params...)
+		addr, tx, _, err := ethtk.CreateContractHelper(client, opts.PrivateKey, string(abi), contract.Code, nonce, params...)
 		if err != nil {
 			log.Println("main:", err)
 			continue
 		}
 		fmt.Printf("TX(%v): %v [err: %v]\n", tx.Hash().Hex(), addr.Hex(), err)
+		var buf []byte
+		if err == nil {
+			buf = big.NewInt(int64(tx.Nonce()) + 1).Bytes()
+		}
+		if opts.CacheNonce != "" {
+			if err := ioutil.WriteFile(opts.CacheNonce, buf, 0666); err != nil {
+				log.Println(err)
+			}
+		}
 
 		TODO = true
 	}

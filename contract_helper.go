@@ -17,6 +17,7 @@
 package blockchain
 
 import (
+	"math/big"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -26,12 +27,13 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-func CreateContractHelper(client bind.ContractBackend, hexKey, rawABI, contractBin string, params ...interface{}) (common.Address, *types.Transaction, *BoundContract, error) {
+func CreateContractHelper(client bind.ContractBackend, hexKey, rawABI, contractBin string, cacheNonce *big.Int, params ...interface{}) (common.Address, *types.Transaction, *BoundContract, error) {
 	key, err := crypto.HexToECDSA(hexKey)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
 	auth := bind.NewKeyedTransactor(key)
+	auth.Nonce = cacheNonce
 	contractABI, err := abi.JSON(strings.NewReader(rawABI))
 	if err != nil {
 		return common.Address{}, nil, nil, err
