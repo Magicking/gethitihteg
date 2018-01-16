@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"context"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -212,17 +213,17 @@ func (nc *NodeConnector) SuggestGasPrice(ctx context.Context) (*big.Int, error) 
 	return price, nil
 }
 
-func (nc *NodeConnector) EstimateGas(ctx context.Context, msg ethereum.CallMsg) (*big.Int, error) {
+func (nc *NodeConnector) EstimateGas(ctx context.Context, msg ethereum.CallMsg) (uint64, error) {
 	gas, err := nc.client.EstimateGas(ctx, msg)
 	if err != nil {
 		log.Printf("EstimateGas, re-trying, error was: %v", err)
 		_, err = nc.GetClient(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("NodeConnector: %v", err)
+			return 0, fmt.Errorf("NodeConnector: %v", err)
 		}
 		gas, err = nc.client.EstimateGas(ctx, msg)
 		if err != nil {
-			return nil, fmt.Errorf("EstimateGas, re-try failed: %v", err)
+			return 0, fmt.Errorf("EstimateGas, re-try failed: %v", err)
 		}
 	}
 	return gas, nil

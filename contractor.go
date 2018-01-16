@@ -23,6 +23,7 @@ import (
 	"math/big"
 
 	"context"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -185,7 +186,7 @@ func (c *BoundContract) transactWithoutSigning(opts *bind.TransactOpts, contract
 		}
 	}
 	gasLimit := opts.GasLimit
-	if gasLimit == nil {
+	if gasLimit == 0 {
 		// Gas estimation cannot succeed without code for method invocations
 		if contract != nil {
 			if code, err := c.transactor.PendingCodeAt(ensureContext(opts.Context), c.address); err != nil {
@@ -239,7 +240,7 @@ func (c *BoundContract) transact(opts *bind.TransactOpts, contract *common.Addre
 		}
 	}
 	gasLimit := opts.GasLimit
-	if gasLimit == nil {
+	if gasLimit == 0 {
 		// Gas estimation cannot succeed without code for method invocations
 		if contract != nil {
 			if code, err := c.transactor.PendingCodeAt(ensureContext(opts.Context), c.address); err != nil {
