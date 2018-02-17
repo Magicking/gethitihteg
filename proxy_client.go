@@ -265,6 +265,14 @@ const (
 	Subscribe
 )
 
+func (nc *NodeConnector) FilterLogs(ctx context.Context, query ethereum.FilterQuery) ([]types.Log, error) {
+	return nil, nil
+}
+
+func (nc *NodeConnector) SubscribeFilterLogs(ctx context.Context, query ethereum.FilterQuery, ch chan<- types.Log) (ethereum.Subscription, error) {
+	return nil, nil
+}
+
 func (nc *NodeConnector) SubscribeToEvents(ctx context.Context, addr common.Address, evt_mgr EventManager) chan ChanMsg {
 	cMsg := make(chan ChanMsg)
 
