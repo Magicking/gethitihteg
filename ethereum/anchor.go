@@ -21,6 +21,7 @@ import (
 	"math/big"
 
 	"context"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -73,7 +74,7 @@ func (c *Anchor) transactWithoutSigning(opts *bind.TransactOpts, to *common.Addr
 		}
 	}
 	gasLimit := opts.GasLimit
-	if gasLimit == nil {
+	if gasLimit == 0 {
 		// Gas estimation cannot succeed without code for method invocations
 		//if to != nil {
 		//	if code, err := c.backend.PendingCodeAt(ensureContext(opts.Context), *c.address); err != nil {
